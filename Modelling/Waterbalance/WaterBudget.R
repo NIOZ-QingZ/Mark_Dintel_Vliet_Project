@@ -5,7 +5,7 @@ require(lubridate)
 library(readr)
 require(dplyr)
 
-setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project\\Modelling\\Waterbalance")# Set the working directory
+setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance")# Set the working directory
 
 #### Data preparation ####
 # WL: Water depths

@@ -16,7 +16,7 @@ require(lubridate)
 library(readr)
 require(dplyr)
 
-setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\Waterbalance")# Set the working directory
+setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance")# Set the working directory
 
 #### Data preparation ####
 # WL: Water depths
@@ -130,3 +130,32 @@ legend("topright",legend = c("Calculation","Measurements"),col=1:2,text.col = 1:
 
 ```
 
+#### Correction of discharge at Gastel based on catchment area
+```{r}
+
+HF_Qin_Roosendaal_1 <- read_csv("HF_Qin_Roosendaal_1.csv",
+                             col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+HF_Qin_Roosendaal_2 <- read_csv("HF_Qin_Roosendaal_2.csv",
+                             col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+
+names(HF_Qin_Roosendaal_1) <- c("Datum", "Qin_Roosendaal_1")
+names(HF_Qin_Roosendaal_2) <- c("Datum", "Qin_Roosendaal_2")
+
+plot(HF_Qin_Roosendaal_1$Datum, HF_Qin_Roosendaal_1$Qin_Roosendaal_1)
+lines(HF_Qin_Roosendaal_2$Datum, HF_Qin_Roosendaal_2$Qin_Roosendaal_2, col=2)
+HF_Qin_Roosendaal <- merge(HF_Qin_Roosendaal_1, HF_Qin_Roosendaal_2, by = "Datum")
+plot(HF_Qin_Roosendaal$Qin_Roosendaal_1, HF_Qin_Roosendaal$Qin_Roosendaal_2)
+lines(0:12,0:12, col="red")
+plot(density(HF_Qin_Roosendaal$Qin_Roosendaal_2-HF_Qin_Roosendaal$Qin_Roosendaal_1))
+# From the visualization Roosendaal_2 is on average larger than Roosendaal_1, from previous results that calculates water level dynamics based on inflow and outflow measurements, we had a underestimation of total Qin. Therefore, I'm going to use the Roosendaal_2 measurements rather than Roosendaal_1.
+
+WaterBudget_MDV$Qin_Roosendaal <- approx(HF_Qin_Roosendaal$Datum%>%as.numeric, HF_Qin_Roosendaal$Qin_Roosendaal_2, xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+WaterBudget_MDV$Qin_Molenbeak_CorrectedByCatchment <- WaterBudget_MDV$Roosendaal
+
+
+Roosendaal_CatchmentArea <- 2277 # 1 ha = 10000 m2
+Molenbeek_CatchmentArea <- 1709 # 1 ha = 10000 m2
+
+
+```
