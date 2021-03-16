@@ -115,7 +115,18 @@ lines(WaterBudget_MDV$Datum,WaterBudget_MDV$Qin_Molenbeak, col=2)
 
 #### Calculating the water level in Vliet based on Inflowsa and Outflows we have ####
 ```{r}
+WaterBudget_MDV$dV_Cal = (WaterBudget_MDV$Qin_MarkCanal+WaterBudget_MDV$Qin_BlauweKamer+WaterBudget_MDV$Qin_Molenbeak+WaterBudget_MDV$Qin_Oranjeboombrug-WaterBudget_MDV$Qout_Dintelsas-WaterBudget_MDV$Qout_Vliet)*WaterBudget_MDV$dt
 
+WaterBudget_MDV$WL_Cal = NA
+WaterBudget_MDV$WL_Cal[1]=WaterBudget_MDV$WL_Up_Dintel[1]
+for (t in 2:nrow(WaterBudget_MDV)) {
+  WaterBudget_MDV$WL_Cal[t] = WaterBudget_MDV$WL_Cal[t-1]+WaterBudget_MDV$dV_Cal[t-1]/Surface
+} 
+
+plot(WaterBudget_MDV$Datum,WaterBudget_MDV$WL_Cal)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Dintel, col=2)
+
+legend("topright",legend = c("Calculation","Measurements"),col=1:2,text.col = 1:2,lty=1)
 
 ```
 
