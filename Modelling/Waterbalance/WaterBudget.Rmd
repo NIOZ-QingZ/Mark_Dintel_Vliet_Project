@@ -104,10 +104,18 @@ WaterBudget_MDV$dV <- c(0, diff(WaterBudget_MDV$WL_Up_Dintel))*Surface # m^3
 #### Calculting the rest discharge to close the water budget ####
 WaterBudget_MDV$Q_diff <- WaterBudget_MDV$dV/WaterBudget_MDV$dt # m3/s
 
+#### Calculation of discharge at Gastel
+WaterBudget_MDV$Gaste_Calcuted <- WaterBudget_MDV$Q_diff-(WaterBudget_MDV$Qin_MarkCanal+WaterBudget_MDV$Qin_BlauweKamer+WaterBudget_MDV$Qin_Oranjeboombrug-WaterBudget_MDV$Qout_Dintelsas-WaterBudget_MDV$Qout_Vliet)
+
 #### Compare it with Measurements at Molenbeak ####
-plot(WaterBudget_MDV$Datum,WaterBudget_MDV$Q_diff, type = "l",ylim = c(-100,100))  
+plot(WaterBudget_MDV$Datum,WaterBudget_MDV$Gaste_Calcuted, type = "l",ylim = c(-100,100))  
 lines(WaterBudget_MDV$Datum,WaterBudget_MDV$Qin_Molenbeak, col=2)
-plot(WaterBudget_MDV$Q_diff, WaterBudget_MDV$Qin_Molenbeak)
-lines(-100:100,-100:100,col="red") # add 1:1 line
 
 ```
+
+#### Calculating the water level in Vliet based on Inflowsa and Outflows we have ####
+```{r}
+
+
+```
+
