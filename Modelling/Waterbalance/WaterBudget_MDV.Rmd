@@ -1,0 +1,203 @@
+---
+title: "WaterBudget_MDV"
+author: "QingQing"
+date: "18/03/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+#### Reading data ####
+```{r}
+
+# dVol = Qin-Qout
+
+require(lubridate)
+library(readr)
+require(dplyr)
+
+setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance")# Set the working directory
+
+#### Data preparation ####
+# WL: Water depths
+# Up: Upstream of sluice
+# Down: Downstream of sluice
+
+WL_Down_Vliet <- read_csv("WL_Down_Vliet.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+WL_Down_Dintel <- read_csv("WL_Down_Dintel.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Down_Vliet) <- c("Datum", "WL_Down_Vliet")
+names(WL_Down_Dintel) <- c("Datum", "WL_Down_Dintel")
+# Water depth measurements at downstream of Dintel and Vliet as indicator of Water depth dynamics in Volkerakmeer
+
+WL_Up_Vliet <- read_csv("WL_Up_Vliet.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+WL_Up_Dintel <- read_csv("WL_Up_Dintel.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Up_Vliet) <- c("Datum", "WL_Up_Vliet")
+names(WL_Up_Dintel) <- c("Datum", "WL_Up_Dintel")
+# Water depth measurements at upstream of Dintel and Vliet as indicator of Water depth dynamics in Mark-Dintel-Vliet system
+
+# Gastel (Molenbeak) water depth measurements
+WL_Gastel <- read_csv("WL_Gastel.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Gastel) <- c("Datum", "WL_Gastel")
+
+# Water level inside MDV system
+WL_Down_Rooskensdonk <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Down_Rooskensdonk.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Down_Rooskensdonk) <- c("Datum", "WL_Down_Rooskensdonk")
+
+WL_Down_Oosterhout <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Down_Oosterhout.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Down_Oosterhout) <- c("Datum", "WL_Down_Oosterhout")
+
+WL_Up_Oosterhout <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Up_Oosterhout.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Up_Oosterhout) <- c("Datum", "WL_Up_Oosterhout")
+
+# Inflow discharges:
+HF_Qin_MarkCanal <- read_csv("HF_Qin_MarkCanal.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qin_MarkCanal) <- c("Datum","Qin_MarkCanal")
+
+HF_Qin_Oranjeboombrug <- read_csv("HF_Qin_Oranjeboombrug.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qin_Oranjeboombrug) <- c("Datum","Qin_Oranjeboombrug")
+
+HF_Qin_BlauweKamer <- read_csv("HF_Qin_BlauweKamer.csv",
+                               col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qin_BlauweKamer) <- c("Datum","Qin_BlauweKamer")
+
+HF_Qin_Molenbeak <- read_csv("HF_Qin_Molenbeak.csv",
+                             col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qin_Molenbeak) <- c("Datum","Qin_Molenbeak")
+
+# Outflow discharges:
+HF_Qout_Dintelsas <- read_csv("HF_Qout_Dintelsas.csv",
+                              col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qout_Dintelsas) <- c("Datum", "Qout_Dintelsas")
+
+HF_Qout_Vliet <- read_csv("HF_Qout_Vliet.csv",
+                          col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(HF_Qout_Vliet) <- c("Datum", "Qout_Vliet")
+
+# Integrating dataset #
+sTime_numeric <- seq(HF_Qin_MarkCanal$Datum[1]%>%as.numeric,HF_Qin_MarkCanal$Datum[length(HF_Qin_MarkCanal$Datum)]%>%as.numeric, by=3600) #hourly interval
+
+WaterBudget_MDV <- data.frame(Datum = ymd_hms("1970-01-01 00:00:00")+sTime_numeric,WL_Down_Dintel=NA,WL_Down_Vliet=NA,WL_Up_Dintel=NA,WL_Up_Vliet=NA,WL_Gastel=NA, WL_Down_Oosterhout=NA,WL_Up_Oosterhout=NA, WL_Down_Rooskensdonk=NA, Qin_MarkCanal=NA, Qin_BlauweKamer=NA, Qin_Molenbeak=NA, Qin_Oranjeboombrug=NA, Qout_Dintelsas=NA, Qout_Vliet=NA)
+
+WaterBudget_MDV$WL_Down_Dintel <- approx(WL_Down_Dintel$Datum%>%as.numeric,WL_Down_Dintel$WL_Down_Dintel,xout=WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$WL_Down_Vliet <- approx(WL_Down_Vliet$Datum%>%as.numeric,WL_Down_Vliet$WL_Down_Vliet,xout=WaterBudget_MDV$Datum%>%as.numeric)$y
+
+WaterBudget_MDV$WL_Up_Dintel <- approx(WL_Up_Dintel$Datum%>%as.numeric,WL_Up_Dintel$WL_Up_Dintel,xout=WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$WL_Up_Vliet <- approx(WL_Up_Vliet$Datum%>%as.numeric,WL_Up_Vliet$WL_Up_Vliet,xout=WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$WL_Gastel <- approx(WL_Gastel$Datum%>%as.numeric,WL_Gastel$WL_Gastel, xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+WaterBudget_MDV$WL_Up_Oosterhout <- approx(WL_Up_Oosterhout$Datum%>%as.numeric,WL_Up_Oosterhout$WL_Up_Oosterhout,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+WaterBudget_MDV$WL_Down_Oosterhout <- approx(WL_Down_Oosterhout$Datum%>%as.numeric,WL_Down_Oosterhout$WL_Down_Oosterhout,xout = WaterBudget_MDV$Datum%>%as.numeric)$y # inside the MDV system
+
+WaterBudget_MDV$WL_Down_Rooskensdonk <- approx(WL_Down_Rooskensdonk$Datum%>%as.numeric,WL_Down_Rooskensdonk$WL_Down_Rooskensdonk,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+### Inflows and outflows
+WaterBudget_MDV$Qin_MarkCanal <- approx(HF_Qin_MarkCanal$Datum%>%as.numeric,HF_Qin_MarkCanal$Qin_MarkCanal,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$Qin_BlauweKamer <- approx(HF_Qin_MarkCanal$Datum%>%as.numeric,HF_Qin_MarkCanal$Qin_MarkCanal,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$Qin_Molenbeak <- approx(HF_Qin_Molenbeak$Datum%>%as.numeric,HF_Qin_Molenbeak$Qin_Molenbeak,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$Qin_Oranjeboombrug <- approx(HF_Qin_Oranjeboombrug$Datum%>%as.numeric,HF_Qin_Oranjeboombrug$Qin_Oranjeboombrug,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+WaterBudget_MDV$Qout_Vliet <- approx(HF_Qout_Vliet$Datum%>%as.numeric,HF_Qout_Vliet$Qout_Vliet,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$Qout_Dintelsas <- approx(HF_Qout_Dintelsas$Datum%>%as.numeric,HF_Qout_Dintelsas$Qout_Dintelsas,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+## Calculation of discharge at Molenbeak (Gastel) by Roosendaal discharge based on catchment-discharge relationship
+HF_Qin_Roosendaal_2 <- read_csv("HF_Qin_Roosendaal_2.csv",
+                             col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+
+names(HF_Qin_Roosendaal_2) <- c("Datum", "Qin_Roosendaal_2")
+
+WaterBudget_MDV$Qin_Roosendaal <- approx(HF_Qin_Roosendaal_2$Datum%>%as.numeric, HF_Qin_Roosendaal_2$Qin_Roosendaal_2, xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+
+Roosendaal_CatchmentArea <- 2277 # 1 ha = 10000 m2
+Molenbeek_CatchmentArea <- 1709 # 1 ha = 10000 m2
+
+WaterBudget_MDV$Qin_Molenbeak_Corr <- WaterBudget_MDV$Qin_Roosendaal/Roosendaal_CatchmentArea*Molenbeek_CatchmentArea
+
+```
+
+#### Compare the measurements at Dintel and Vliet downsteram as indicator of water depth dynamics at Volkerakmeer ####
+```{r}
+plot(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Down_Dintel)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Down_Vliet, col=2)
+plot(WaterBudget_MDV$WL_Down_Dintel, WaterBudget_MDV$WL_Down_Vliet)
+lines(-2:2,-2:2,col=2) # 1:1 line
+
+#### Compare depth measurements inside MDV system
+plot(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Dintel)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Vliet, col=2)
+
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Gastel,col=3)
+
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Down_Oosterhout, col=2)
+
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Vliet, col=2)
+
+```
+
+#### Trunc data from hourly to daily ####
+```{r}
+WaterBudget_MDV$Daily <- trunc(WaterBudget_MDV$Datum, "days")
+WB_MDV_Day <- aggregate(WaterBudget_MDV[,2:18],by=list(as.character(WaterBudget_MDV$Daily)),mean)
+names(WB_MDV_Day)[1] <- "Datum"
+WB_MDV_Day$Datum <- ymd(WB_MDV_Day$Datum)
+
+#### analysis summer and the rest period separately
+WB_MDV_Day$period <- ifelse(month(WB_MDV_Day$Datum)%in%5:9,"Summer","No summer")
+WB_MDV_Day$period <- factor(WB_MDV_Day$period, levels = c("Summer","No Summer"))
+```
+
+#### Closing the water balance by adjusting the inflows at Gastel (Molenbeak)
+```{r}
+
+Surface <- 50*(114-0)*40+50*(640-114)*50+50*(666-640)*100+50*(743-666)*40+50*(760-743)*26+50*(1117-760)*30 # m^2
+WB_MDV_Day$dt <- c(1, diff(as.numeric(WB_MDV_Day$Datum))*86400) # seconds
+
+WB_MDV_Day$dV <- c(0, diff(WB_MDV_Day$WL_Down_Oosterhout)*(50*(114-0)*40)+diff(WB_MDV_Day$WL_Down_Rooskensdonk)*50*((640-114)*50+(666-640)*100)+diff(WB_MDV_Day$WL_Gastel)*50*((743-666)*40+(760-743)*26+(1117-760)*30)) # m^3
+
+#### Calculting the rest discharge to close the water budget ####
+WB_MDV_Day$dQ <- WB_MDV_Day$dV/WB_MDV_Day$dt # m3/s
+
+#### Calculation of discharge at polders
+WB_MDV_Day$Q_Polder <- WB_MDV_Day$dQ-(WB_MDV_Day$Qin_MarkCanal+WB_MDV_Day$Qin_BlauweKamer+WB_MDV_Day$Qin_Oranjeboombrug+WB_MDV_Day$Qin_Molenbeak_Corr-WB_MDV_Day$Qout_Dintelsas-WB_MDV_Day$Qout_Vliet)
+
+mean(WB_MDV_Day$Q_Polder, na.rm = T)
+sd(WB_MDV_Day$Q_Polder, na.rm = T)
+
+# summer discharge
+mean(WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(5:9))],na.rm = T)
+sd(WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(5:9))],na.rm = T)
+
+# no summer discharge
+mean(WB_MDV_Day$Q_Polder[-which(month(WB_MDV_Day$Datum)%in%c(5:9))],na.rm = T)
+sd(WB_MDV_Day$Q_Polder[-which(month(WB_MDV_Day$Datum)%in%c(5:9))],na.rm = T)
+
+#### Compare it with Measurements at Molenbeak ####
+plot(WB_MDV_Day$Datum,WB_MDV_Day$Q_Polder, type = "l", ylab="Discharge (m3/s)", xlab="", main="Polder")  
+
+abline(v=ymd("2018-05-01","2018-09-30","2019-05-01","2019-09-30","2020-05-01","2020-09-30"), col="red", lty=2)
+
+# Discharge data from report
+Q_df <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\Q_df.csv")
+Q_df$Date <- ymd("2019-01-01","2019-02-01","2019-03-01","2019-04-01","2019-05-01","2019-06-01","2019-07-01","2019-08-01","2019-09-01","2019-10-01","2019-11-01","2019-12-01")
+
+points(Q_df$Date, Q_df$f..Ground.water+Q_df$g..rest.heading+Q_df$h..PolderOut,col="red",pch=19)
+
+points(Q_df$Date, Q_df$h..PolderOut,col="green",pch=19)
+
+```
+
+#### Q vs delta water levels ####
+```{r}
+
+# for Oosterhout:
+plot(WaterBudget_MDV$WL_Up_Oosterhout-WaterBudget_MDV$WL_Down_Oosterhout,WaterBudget_MDV$Qin_MarkCanal, main = "Oosterhout",xlab = "delta water level (m)", ylab = "discharge (m3/s)")
+summary(lm(WaterBudget_MDV$Qin_MarkCanal~WaterBudget_MDV$WL_Up_Oosterhout-WaterBudget_MDV$WL_Down_Oosterhout))
+
+plot(WaterBudget_MDV$WL_Up_Dintel-WaterBudget_MDV$WL_Down_Dintel, WaterBudget_MDV$Qout_Dintelsas, main = "Dintel",xlab = "delta water level (m)", ylab = "discharge (m3/s)")
+summary(lm(WaterBudget_MDV$Qout_Dintelsas~(WaterBudget_MDV$WL_Up_Dintel-WaterBudget_MDV$WL_Down_Dintel)))
+
+plot(WaterBudget_MDV$WL_Gastel-WaterBudget_MDV$WL_Down_Vliet, WaterBudget_MDV$Qout_Vliet, main = "Vliet",xlab = "delta water level (m)", ylab = "discharge (m3/s)")
+summary(lm(WaterBudget_MDV$Qout_Vliet~(WaterBudget_MDV$WL_Gastel-WaterBudget_MDV$WL_Down_Vliet)))
+
+```
+

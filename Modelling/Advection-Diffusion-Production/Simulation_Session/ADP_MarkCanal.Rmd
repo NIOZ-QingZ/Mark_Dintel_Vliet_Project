@@ -18,20 +18,20 @@ require(dplyr)
 ```{r}
 
 ### Water Budget ####
-WaterBudget <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\Waterbalance\\WaterBudget.csv")
+WaterBudget <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WaterBudget.csv")
 
 sTime=WaterBudget$sTime
 
 ### Input data preparation ####
-HF_BlueCh_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_MarkCanal.csv")
-HF_BlueCh_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_DintelCanal.csv")
-HF_BlueCh_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_Vliet.csv")
+HF_BlueCh_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_MarkCanal.csv")
+HF_BlueCh_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_DintelCanal.csv")
+HF_BlueCh_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_BlueCh_Vliet.csv")
 
-HF_Chla_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_Chla_MarkCanal.csv")
-HF_Chla_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_Chla_DintelCanal.csv")
-HF_Chla_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_Chla_Vliet.csv")
+HF_Chla_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_Chla_MarkCanal.csv")
+HF_Chla_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_Chla_DintelCanal.csv")
+HF_Chla_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_Chla_Vliet.csv")
 
-mL <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\data\\MeteorologicalData\\Radiance.csv")
+mL <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Data\\MeteorologicalData\\Radiance.csv")
 mL$Time <- paste(mL$YYYYMMDD, mL$HH)%>%ymd_h%>%as.numeric
 mL <- approx(x=mL$Time,y=mL$Q,xout=WaterBudget$sTime)%>%as.data.frame()
 
@@ -41,7 +41,7 @@ MDV_data <- data.frame(sTime=WaterBudget$sTime, Date=WaterBudget$Date%>%ymd_hms,
 MDV_data$mL <- mL$y[which(mL$x%in%MDV_data$sTime)]
 
 # Temperature data
-HF_Temp <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\HF_Temp_MarkCanal.csv")
+HF_Temp <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\HF_Temp_MarkCanal.csv")
 MDV_data$Temp <- approx(HF_Temp$Datum%>%dmy_hms%>%as.numeric, HF_Temp$Waarde, xout=MDV_data$sTime)$y
   
 # Cyanobacteria measurements
@@ -73,10 +73,10 @@ MDV_data <- MDV_data%>%na.omit
 
 
 # Nutrient data ####
-PO4_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\LF_PO4_MarkCanal.csv")
-PO4_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\LF_PO4_DintelCanal.csv")
-PO4_MVCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\LF_PO4_MVCanal.csv")
-PO4_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet\\Modelling\\Advection-Diffusion-Production\\LF_PO4_Vliet.csv")
+PO4_MarkCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\LF_PO4_MarkCanal.csv")
+PO4_DintelCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\LF_PO4_DintelCanal.csv")
+PO4_MVCanal <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\LF_PO4_MVCanal.csv")
+PO4_Vliet <- read.csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Advection-Diffusion-Production\\LF_PO4_Vliet.csv")
 
 MDV_data$PO4_MarkCanal <- NA
 MDV_data$PO4_DintelCanal <- NA
@@ -448,9 +448,9 @@ for (Chla in Chla_vec) {
       #sMuMaxTm[t] = uMuMaxTm
       
       if(x<Num_Place_Steps){#
-        TotChla[[Chla]][t,x]=TotChla[[Chla]][(t-1),(x-1)]*(One+Two)+TotChla[[Chla]][(t-1),x]*((1+growth-degradation)^(Time_step/SecondPerDay)-One-2*Two)+TotChla[[Chla]][(t-1),(x+1)]*Two
+        TotChla[[Chla]][t,x]=TotChla[[Chla]][(t-1),(x-1)]*(One+Two)+TotChla[[Chla]][(t-1),x]*(1+(growth-degradation)*(Time_step/SecondPerDay)-One-2*Two)+TotChla[[Chla]][(t-1),(x+1)]*Two
       }else{
-        TotChla[[Chla]][t,x]=TotChla[[Chla]][(t-1),(x-1)]*(One+Two)+TotChla[[Chla]][(t-1),x]*((1+growth-degradation)^(Time_step/SecondPerDay)-One-2*Two)+TotChla[[Chla]][(t-1),(x-1)]*Two # mirrored edge
+        TotChla[[Chla]][t,x]=TotChla[[Chla]][(t-1),(x-1)]*(One+Two)+TotChla[[Chla]][(t-1),x]*(1+(growth-degradation)*(Time_step/SecondPerDay)-One-2*Two)+TotChla[[Chla]][(t-1),(x-1)]*Two # mirrored edge
       }
     }
   }

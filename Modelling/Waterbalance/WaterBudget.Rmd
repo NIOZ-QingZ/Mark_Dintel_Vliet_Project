@@ -7,7 +7,7 @@ output:
   html_document: default
 ---
 
-
+#### Reading data ####
 ```{r}
 
 # dVol = Qin-Qout
@@ -99,22 +99,24 @@ Surface <- 50*(114-0)*40+50*(640-114)*50+50*(666-640)*100+50*(743-666)*40+50*(76
 WaterBudget_MDV$dt <- c(1, diff(as.numeric(WaterBudget_MDV$Datum))) # seconds
 range(WaterBudget_MDV$dt)
 WaterBudget_MDV <- WaterBudget_MDV[which(WaterBudget_MDV$dt!=0),]
-WaterBudget_MDV$dV <- c(0, diff(WaterBudget_MDV$WL_Up_Dintel))*Surface # m^3
+#WaterBudget_MDV$dV <- c(0, diff(WaterBudget_MDV$WL_Up_Dintel))*Surface # m^3
+WaterBudget_MDV$dV <- c(0, diff(WaterBudget_MDV$WL_Gastel))*Surface # m^3
 
 #### Calculting the rest discharge to close the water budget ####
 WaterBudget_MDV$Q_diff <- WaterBudget_MDV$dV/WaterBudget_MDV$dt # m3/s
 
 #### Calculation of discharge at Gastel
-WaterBudget_MDV$Gaste_Calcuted <- WaterBudget_MDV$Q_diff-(WaterBudget_MDV$Qin_MarkCanal+WaterBudget_MDV$Qin_BlauweKamer+WaterBudget_MDV$Qin_Oranjeboombrug-WaterBudget_MDV$Qout_Dintelsas-WaterBudget_MDV$Qout_Vliet)
+WaterBudget_MDV$Q_Rest <- WaterBudget_MDV$Q_diff-(WaterBudget_MDV$Qin_MarkCanal+WaterBudget_MDV$Qin_BlauweKamer+WaterBudget_MDV$Qin_Oranjeboombrug-WaterBudget_MDV$Qout_Dintelsas-WaterBudget_MDV$Qout_Vliet)
 
 #### Compare it with Measurements at Molenbeak ####
-plot(WaterBudget_MDV$Datum,WaterBudget_MDV$Gaste_Calcuted, type = "l",ylim = c(-100,100))  
+plot(WaterBudget_MDV$Datum,WaterBudget_MDV$Q_Rest, type = "l",ylim = c(-100,100))  
 lines(WaterBudget_MDV$Datum,WaterBudget_MDV$Qin_Molenbeak, col=2)
 
 ```
 
 #### Calculating the water level in Vliet based on Inflowsa and Outflows we have ####
 ```{r}
+
 WaterBudget_MDV$dV_Cal = (WaterBudget_MDV$Qin_MarkCanal+WaterBudget_MDV$Qin_BlauweKamer+WaterBudget_MDV$Qin_Molenbeak+WaterBudget_MDV$Qin_Oranjeboombrug-WaterBudget_MDV$Qout_Dintelsas-WaterBudget_MDV$Qout_Vliet)*WaterBudget_MDV$dt
 
 WaterBudget_MDV$WL_Cal = NA
@@ -151,11 +153,191 @@ plot(density(HF_Qin_Roosendaal$Qin_Roosendaal_2-HF_Qin_Roosendaal$Qin_Roosendaal
 
 WaterBudget_MDV$Qin_Roosendaal <- approx(HF_Qin_Roosendaal$Datum%>%as.numeric, HF_Qin_Roosendaal$Qin_Roosendaal_2, xout = WaterBudget_MDV$Datum%>%as.numeric)$y
 
-WaterBudget_MDV$Qin_Molenbeak_CorrectedByCatchment <- WaterBudget_MDV$Roosendaal
-
-
 Roosendaal_CatchmentArea <- 2277 # 1 ha = 10000 m2
 Molenbeek_CatchmentArea <- 1709 # 1 ha = 10000 m2
 
+WaterBudget_MDV$Qin_Molenbeak_CorrectedByCatchment <- WaterBudget_MDV$Qin_Roosendaal/Roosendaal_CatchmentArea*Molenbeek_CatchmentArea
 
+```
+
+#### Calculation of Q_Polder with catchment area corrected Q_Gastel ####
+
+```{r}
+WaterBudget_MDV$Q_Polder <- WaterBudget_MDV$Q_Rest-WaterBudget_MDV$Qin_Molenbeak_CorrectedByCatchment
+
+plot(WaterBudget_MDV$Datum,WaterBudget_MDV$Q_Rest, ylab = "Q_Polder (m3/s)", xlab = "",t="l")
+lines(WaterBudget_MDV$Datum,WaterBudget_MDV$Q_Polder,col=2)
+legend("topright",legend=c("Q_Gastel=0","Q_Gastel corrected for catchment area"),col=1:2,text.col = 1:2,lty=1)
+
+
+
+plot(density(WaterBudget_MDV$Q_Rest-WaterBudget_MDV$Q_Polder,na.rm = T))
+
+mean(WaterBudget_MDV$Q_Polder,na.rm = T)
+
+
+```
+
+```{r}
+plot(WaterBudget_MDV$Datum, WaterBudget_MDV$Qin_MarkCanal)
+
+mean(WaterBudget_MDV$Qin_MarkCanal)
+```
+
+#### Upstream Water depth dynamics ####
+```{r}
+setwd("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance")
+WL_Molenpolder_Bov <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Molenpolder_Boven.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+WL_Molenpolder_Beneden <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Molenpolder_Beneden.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+
+Bov_Beneden_Molenpolder <- WL_Molenpolder_Bov$Waarde-WL_Molenpolder_Beneden$Waarde
+
+plot(WL_Molenpolder_Beneden$Datum[which(month(WL_Molenpolder_Beneden$Datum)%in%(5:9))],Bov_Beneden_Molenpolder[which(month(WL_Molenpolder_Beneden$Datum)%in%(5:9))])
+
+plot(density(Bov_Beneden_Molenpolder[which(month(WL_Molenpolder_Beneden$Datum)%in%(5:9))],na.rm = T))
+
+plot(WL_Molenpolder_Beneden$Datum[which(month(WL_Molenpolder_Beneden$Datum)%in%c(1:4,10:12))],Bov_Beneden_Molenpolder[which(month(WL_Molenpolder_Beneden$Datum)%in%c(1:4,10:12))])
+
+plot(density(Bov_Beneden_Molenpolder[which(month(WL_Molenpolder_Beneden$Datum)%in%c(1:4,10:12))],na.rm = T))
+
+
+
+WL_Rooskendonk_Bov <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Rooskensdonk_Boven.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Rooskendonk_Bov) <- c("Datum", "WL_Rooskendonk_Bov")
+
+WL_Rooskendonk_Beneden <- read_csv("C:\\Users\\QingZ\\PhD-Qing\\GitProject\\Mark_Dintel_Vliet_Project_Shared\\Modelling\\Waterbalance\\WL_Rooskensdonk_Beneden.csv",col_types = cols(Datum = col_datetime(format = "%d-%m-%Y %H:%M:%S"), Eenheid = col_skip(),Serie = col_skip(), X5 = col_skip()))
+names(WL_Rooskendonk_Beneden) <- c("Datum", "WL_Rooskendonk_Beneden")
+
+WL_Rooskendonk <- merge(WL_Rooskendonk_Bov, WL_Rooskendonk_Beneden, by="Datum")
+
+plot(WL_Rooskendonk$Datum, WL_Rooskendonk$WL_Rooskendonk_Bov-WL_Rooskendonk$WL_Rooskendonk_Beneden)
+diff_Rooskendonk <- WL_Rooskendonk$WL_Rooskendonk_Bov-WL_Rooskendonk$WL_Rooskendonk_Beneden
+
+plot(WL_Rooskendonk_Beneden$Datum[which(month(WL_Rooskendonk_Beneden$Datum)%in%(5:9))],diff_Rooskendonk[which(month(WL_Rooskendonk_Beneden$Datum)%in%(5:9))])
+
+plot(density(diff_Rooskendonk[which(month(WL_Rooskendonk_Beneden$Datum)%in%(5:9))],na.rm = T))
+
+plot(WL_Rooskendonk_Beneden$Datum[which(month(WL_Rooskendonk_Beneden$Datum)%in%c(1:4,10:12))],diff_Rooskendonk[which(month(WL_Rooskendonk_Beneden$Datum)%in%c(1:4,10:12))])
+
+plot(density(diff_Rooskendonk[which(month(WL_Rooskendonk_Beneden$Datum)%in%c(1:4,10:12))],na.rm = T))
+
+# Inclusion: Beneth is in the system
+
+WaterBudget_MDV$WL_Molenpolder <- approx(WL_Molenpolder_Beneden$Datum%>%as.numeric,WL_Molenpolder_Beneden$Waarde,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+WaterBudget_MDV$WL_Rooskendonk <- approx(WL_Rooskendonk_Beneden$Datum%>%as.numeric,WL_Rooskendonk_Beneden$WL_Rooskendonk_Beneden,xout = WaterBudget_MDV$Datum%>%as.numeric)$y
+``` 
+
+#### Comparison between upstream and downstream water level measurements ####
+```{r}
+#### Compare depth measurements inside MDV system
+plot(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Dintel)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Up_Vliet, col=2)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Gastel,col=3)
+
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Molenpolder, col=4)
+lines(WaterBudget_MDV$Datum, WaterBudget_MDV$WL_Rooskendonk, col=5)
+
+# Dintel vs Molenpolder
+plot(WaterBudget_MDV$WL_Down_Dintel, WaterBudget_MDV$WL_Molenpolder)
+summary(lm(WaterBudget_MDV$WL_Molenpolder~WaterBudget_MDV$WL_Down_Dintel))
+
+# Dintel vs Rooskendonk
+plot(WaterBudget_MDV$WL_Down_Dintel, WaterBudget_MDV$WL_Rooskendonk)
+summary(lm(WaterBudget_MDV$WL_Rooskendonk~WaterBudget_MDV$WL_Down_Dintel))
+
+``` 
+
+
+# Trunc  date to daily
+```{r}
+WaterBudget_MDV$Daily <- trunc(WaterBudget_MDV$Datum, "days")
+WB_MDV_Day <- aggregate(WaterBudget_MDV[,2:21],by=list(as.character(WaterBudget_MDV$Daily)),mean)
+names(WB_MDV_Day)[1] <- "Datum"
+WB_MDV_Day$Datum <- ymd(WB_MDV_Day$Datum)
+
+plot(WB_MDV_Day$Datum, WB_MDV_Day$Q_Polder,ylab = "Q_Polder (m3/s)", xlab = "")
+plot(density(WB_MDV_Day$Q_Polder, na.rm = T),main = "density distribution of Q_Polder")
+
+```
+
+#### Water level fluctuations ####
+```{r}
+
+plot(WB_MDV_Day$Datum, WB_MDV_Day$WL_Up_Dintel, col=1, t="l")
+lines(WB_MDV_Day$Datum, WB_MDV_Day$WL_Up_Vliet, col=2)
+
+lines(WB_MDV_Day$Datum, WB_MDV_Day$WL_Gastel, col=3)
+
+```
+
+#### Water level fluctuations ####
+```{r}
+#### Closing the water balance by adjusting the inflows at Gastel (Molenbeak)
+Surface <- 50*(114-0)*40+50*(640-114)*50+50*(666-640)*100+50*(743-666)*40+50*(760-743)*26+50*(1117-760)*30 # m^2
+WB_MDV_Day$dt <- c(1, diff(as.numeric(WB_MDV_Day$Datum))) # seconds
+range(WB_MDV_Day$dt)
+WB_MDV_Day <- WB_MDV_Day[which(WB_MDV_Day$dt!=0),]
+#WB_MDV_Day$dV <- c(0, diff(WB_MDV_Day$WL_Up_Dintel))*Surface # m^3
+WB_MDV_Day$dV <- c(0, diff(WB_MDV_Day$WL_Gastel))*Surface # m^3
+
+#### Calculting the rest discharge to close the water budget ####
+WB_MDV_Day$Q_diff <- WB_MDV_Day$dV/(WB_MDV_Day$dt*86400) # m3/s
+
+#### Calculation of discharge at Gastel
+WB_MDV_Day$Q_Rest <- WB_MDV_Day$Q_diff-(WB_MDV_Day$Qin_MarkCanal+WB_MDV_Day$Qin_BlauweKamer+WB_MDV_Day$Qin_Oranjeboombrug-WB_MDV_Day$Qout_Dintelsas-WB_MDV_Day$Qout_Vliet)
+
+#### Compare it with Measurements at Molenbeak ####
+plot(WB_MDV_Day$Datum,WB_MDV_Day$Q_Rest, type = "l",ylim = c(-100,100))  
+lines(WB_MDV_Day$Datum,WB_MDV_Day$Qin_Molenbeak, col=2)
+```
+
+#### Q vs delta water depth
+```{r}
+
+WaterBudget_MDV$Dintel_diff_WaterDepth <- WaterBudget_MDV$WL_Up_Dintel-WaterBudget_MDV$WL_Down_Dintel
+WaterBudget_MDV$Vliet_diff_WaterDepth <- WaterBudget_MDV$WL_Gastel-WaterBudget_MDV$WL_Down_Vliet
+
+plot(WaterBudget_MDV$Dintel_diff_WaterDepth, WaterBudget_MDV$Qout_Dintelsas,ylab = "discharge at Dintelsas", xlab = "delta water depth (upstream - downstream)")
+summary(lm(WaterBudget_MDV$Qout_Dintelsas~WaterBudget_MDV$Dintel_diff_WaterDepth))
+
+plot(WaterBudget_MDV$Vliet_diff_WaterDepth,WaterBudget_MDV$Qout_Vliet)
+summary(lm(WaterBudget_MDV$Qout_Vliet~WaterBudget_MDV$Vliet_diff_WaterDepth))
+```
+
+#### Q_Polder daily data
+```{r}
+
+WB_MDV_Day$Q_Polder <- WB_MDV_Day$Q_Rest-WB_MDV_Day$Qin_Molenbeak_CorrectedByCatchment
+
+plot(WB_MDV_Day$Datum,WB_MDV_Day$Q_Rest, ylab = "Q_Polder (m3/s)", xlab = "",t="l", ylim = c(-20, 100))
+lines(WB_MDV_Day$Datum,WB_MDV_Day$Q_Polder,col=2)
+legend("topright",legend=c("Q_Gastel=0","Q_Gastel corrected for catchment area"),col=1:2,text.col = 1:2,lty=1,cex=0.8)
+
+
+
+plot(density(WB_MDV_Day$Q_Rest-WB_MDV_Day$Q_Polder,na.rm = T),main = "density distribution of Q_Polder")
+
+mean(WB_MDV_Day$Q_Polder,na.rm = T)
+
+# for polder discharge in summer
+plot(WB_MDV_Day$Datum[which(month(WB_MDV_Day$Datum)%in%c(5:9))],WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(5:9))], xlab = "",ylab = "Q_Polder in summer",t="p",col=1,pch=19)
+mean(WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(5:9))])
+
+points(WB_MDV_Day$Datum[which(month(WB_MDV_Day$Datum)%in%c(10,11,12,1,2,3,4))],WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(10,11,12,1,2,3,4))],col=2,pch=19)
+legend("topright",legend=c("summer","no summer"),col=1:2,text.col = 1:2,pch=19,cex=0.8)
+
+mean(WB_MDV_Day$Q_Polder[which(month(WB_MDV_Day$Datum)%in%c(10,11,12,1,2,3,4))],na.rm = T)
+```
+
+#### Q vs delta Water depth ####
+```{r}
+
+WB_MDV_Day$Dintel_diff_WaterDepth <- WB_MDV_Day$WL_Up_Dintel-WB_MDV_Day$WL_Down_Dintel
+WB_MDV_Day$Vliet_diff_WaterDepth <- WB_MDV_Day$WL_Gastel-WB_MDV_Day$WL_Down_Vliet
+
+plot(WB_MDV_Day$Dintel_diff_WaterDepth, WB_MDV_Day$Qout_Dintelsas,ylab = "discharge at Dintelsas", xlab = "delta water depth (upstream - downstream)")
+summary(lm(WB_MDV_Day$Qout_Dintelsas~WB_MDV_Day$Dintel_diff_WaterDepth))
+
+plot(WB_MDV_Day$Vliet_diff_WaterDepth,WB_MDV_Day$Qout_Vliet)
+summary(lm(WB_MDV_Day$Qout_Vliet~WB_MDV_Day$Vliet_diff_WaterDepth))
 ```

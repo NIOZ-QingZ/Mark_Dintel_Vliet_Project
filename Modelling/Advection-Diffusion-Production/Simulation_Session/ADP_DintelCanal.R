@@ -202,8 +202,7 @@ SteeleFunc <- function(aExtCoef, sDepthW, ISurf, uTm, cSigTm, cTmOpt, cLOptRef,T
 
 LehmanFunc <- function(aExtCoef,sDepthW,ISurf,uTm, cSigTm, cTmOpt,hLRef,TmFunc_value){
   IBottom = ISurf*exp(-aExtCoef*sDepthW)
-  uhLRef = hLRef*TmFunc_value
-  return(1/(aExtCoef*sDepthW)*log((uhLRef*TmFunc_value+ISurf)/(uhLRef*TmFunc_value+IBottom)))
+  return(1/(aExtCoef*sDepthW)*log((uhRef*TmFunc_value+ISurf)/(uhRef*TmFunc_value+IBottom)))
 }
 
 ## Nutrient limitation
